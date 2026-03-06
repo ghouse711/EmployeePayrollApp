@@ -8,6 +8,7 @@ import com.employeepayrollapp.exceptions.ValidationException;
 import com.employeepayrollapp.service.AuthenticationService;
 import com.employeepayrollapp.service.PayrollService;
 import com.employeepayrollapp.payroll.Payslip;
+import java.util.ArrayList;
 
 public class Main {
 
@@ -19,14 +20,18 @@ public class Main {
         PayrollService payrollService = new PayrollService();
 
         Employee employee = null;
+        Payslip payslip = null;
+        String month = null;
 
         while (true) {
 
-            System.out.println("\n===== Employee Payroll System =====");
-            System.out.println("1 Register Employee");
-            System.out.println("2 Login");
-            System.out.println("3 Generate Payslip");
-            System.out.println("4 Exit");
+        	System.out.println("\n===== Employee Payroll System =====");
+        	System.out.println("1 Register Employee");
+        	System.out.println("2 Login");
+        	System.out.println("3 Generate Payslip");
+        	System.out.println("4 Download Payslip");
+        	System.out.println("5 Dashboard");
+        	System.out.println("6 Exit");
 
             System.out.print("Enter choice: ");
 
@@ -85,7 +90,7 @@ public class Main {
                         }
 
                         System.out.print("Month: ");
-                        String month = scanner.nextLine();
+                        month = scanner.nextLine();
 
                         System.out.print("Basic Salary: ");
                         double basic = Double.parseDouble(scanner.nextLine());
@@ -99,7 +104,7 @@ public class Main {
                         System.out.print("Allowances: ");
                         double allowances = Double.parseDouble(scanner.nextLine());
 
-                        Payslip payslip =
+                        payslip =
                                 payrollService.generatePayslip(
                                         employee,
                                         month,
@@ -112,8 +117,93 @@ public class Main {
                         System.out.println(payslip);
 
                         break;
-
+                    
                     case 4:
+
+                        if (payslip == null) {
+                            System.out.println("Please generate a payslip first.");
+                            break;
+                        }
+
+                        try {
+
+                            // Create immutable download copy
+                            com.employeepayrollapp.download.Payslip downloadPayslip =
+                                    new com.employeepayrollapp.download.Payslip(
+                                            employee.getEmpId(),
+                                            employee.getName(),
+                                            month,
+                                            payslip.getComponents().netPay
+                                    );
+
+                            // Clone for safe download
+                            com.employeepayrollapp.download.Payslip cloned =
+                                    (com.employeepayrollapp.download.Payslip) downloadPayslip.clone();
+
+                            // Validate token
+                            com.employeepayrollapp.download.DownloadToken token =
+                                    new com.employeepayrollapp.download.DownloadToken();
+
+                            if (token.isExpired()) {
+                                System.out.println("Download link expired.");
+                                break;
+                            }
+
+                            // Save files
+                            com.employeepayrollapp.service.FileService fileService =
+                                    new com.employeepayrollapp.service.FileService();
+
+                            String txt = fileService.savePayslipAsText(cloned);
+                            String pdf = fileService.savePayslipAsPdf(cloned);
+
+                            System.out.println("Payslip saved:");
+                            System.out.println("TXT → " + txt);
+                            System.out.println("PDF → " + pdf);
+
+                            System.out.println("\nDownloaded Payslip:");
+                            System.out.println(cloned);
+
+                        } catch (Exception e) {
+                            System.out.println("Download failed.");
+                        }
+
+                        break;
+                    
+                    case 5:
+
+                        System.out.print("Enter Employee ID: ");
+                        String empId = scanner.nextLine();
+
+                        System.out.print("Enter Employee Name: ");
+                        String empName = scanner.nextLine();
+
+                        System.out.print("Enter Role (EMPLOYEE/MANAGER): ");
+                        String role = scanner.nextLine();
+
+                        com.employeepayrollapp.dashboard.Employee dashEmployee =
+                                new com.employeepayrollapp.dashboard.Employee(empId, empName, role);
+
+                        ArrayList<com.employeepayrollapp.dashboard.Payslip> payslips =
+                                new ArrayList<>();
+
+                        // Sample payslip data
+                        payslips.add(new com.employeepayrollapp.dashboard.Payslip("Jan", 30000));
+                        payslips.add(new com.employeepayrollapp.dashboard.Payslip("Feb", 32000));
+                        payslips.add(new com.employeepayrollapp.dashboard.Payslip("Mar", 31000));
+                        payslips.add(new com.employeepayrollapp.dashboard.Payslip("Apr", 33000));
+                        payslips.add(new com.employeepayrollapp.dashboard.Payslip("May", 34000));
+
+                        com.employeepayrollapp.dashboard.Dashboard dashboard =
+                                com.employeepayrollapp.dashboard.DashboardFactory.getDashboard(role);
+
+                        if (dashboard != null) {
+
+                            dashboard.display(payslips, dashEmployee);
+                        }
+
+                        break;
+
+                    case 6:
 
                         System.out.println("Exiting application...");
                         scanner.close();

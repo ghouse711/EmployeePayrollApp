@@ -25,6 +25,10 @@ public class Payslip {
         this.components = components;
         this.month = month;
     }
+    
+    public SalaryComponents getComponents() {
+        return components;
+    }
 
     /*
      Formats payslip information into a readable output.
