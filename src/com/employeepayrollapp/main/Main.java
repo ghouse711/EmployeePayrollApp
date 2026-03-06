@@ -6,6 +6,8 @@ import com.employeepayrollapp.employee.Employee;
 import com.employeepayrollapp.employee.Session;
 import com.employeepayrollapp.exceptions.ValidationException;
 import com.employeepayrollapp.service.AuthenticationService;
+import com.employeepayrollapp.service.PayrollService;
+import com.employeepayrollapp.payroll.Payslip;
 
 public class Main {
 
@@ -14,15 +16,20 @@ public class Main {
         Scanner scanner = new Scanner(System.in);
 
         AuthenticationService authService = new AuthenticationService();
+        PayrollService payrollService = new PayrollService();
+
+        Employee employee = null;
 
         while (true) {
 
             System.out.println("\n===== Employee Payroll System =====");
-            System.out.println("1. Register Employee");
-            System.out.println("2. Login");
-            System.out.println("3. Exit");
+            System.out.println("1 Register Employee");
+            System.out.println("2 Login");
+            System.out.println("3 Generate Payslip");
+            System.out.println("4 Exit");
 
-            System.out.print("Enter your choice: ");
+            System.out.print("Enter choice: ");
+
             int choice = Integer.parseInt(scanner.nextLine());
 
             try {
@@ -31,39 +38,32 @@ public class Main {
 
                     case 1:
 
-                        System.out.print("Enter Employee ID: ");
+                        System.out.print("Employee ID: ");
                         String id = scanner.nextLine();
 
-                        System.out.print("Enter Name: ");
+                        System.out.print("Name: ");
                         String name = scanner.nextLine();
 
-                        System.out.print("Enter Email: ");
+                        System.out.print("Email: ");
                         String email = scanner.nextLine();
 
-                        System.out.print("Enter Phone: ");
+                        System.out.print("Phone: ");
                         String phone = scanner.nextLine();
 
-                        System.out.print("Enter Salary: ");
+                        System.out.print("Salary: ");
                         double salary = Double.parseDouble(scanner.nextLine());
 
-                        System.out.print("Create Username: ");
+                        System.out.print("Username: ");
                         String username = scanner.nextLine();
 
-                        System.out.print("Create Password: ");
+                        System.out.print("Password: ");
                         String password = scanner.nextLine();
 
-                        /*
-                         Create employee object (UC1)
-                        */
-                        Employee employee = new Employee(id, name, email, phone, salary);
+                        employee = new Employee(id, name, email, phone, salary);
 
-                        /*
-                         Register the user for authentication (UC2)
-                        */
                         authService.registerUser(username, password);
 
-                        System.out.println("\nEmployee Registered Successfully");
-                        System.out.println(employee);
+                        System.out.println("Employee registered successfully.");
 
                         break;
 
@@ -72,19 +72,48 @@ public class Main {
                         Session session = authService.login();
 
                         if (session != null) {
-
                             System.out.println(session);
-
-                            if (session.isExpired()) {
-                                System.out.println("Session expired");
-                            } else {
-                                System.out.println("Session still active");
-                            }
                         }
 
                         break;
 
                     case 3:
+
+                        if (employee == null) {
+                            System.out.println("Please register employee first.");
+                            break;
+                        }
+
+                        System.out.print("Month: ");
+                        String month = scanner.nextLine();
+
+                        System.out.print("Basic Salary: ");
+                        double basic = Double.parseDouble(scanner.nextLine());
+
+                        System.out.print("HRA: ");
+                        double hra = Double.parseDouble(scanner.nextLine());
+
+                        System.out.print("DA: ");
+                        double da = Double.parseDouble(scanner.nextLine());
+
+                        System.out.print("Allowances: ");
+                        double allowances = Double.parseDouble(scanner.nextLine());
+
+                        Payslip payslip =
+                                payrollService.generatePayslip(
+                                        employee,
+                                        month,
+                                        basic,
+                                        hra,
+                                        da,
+                                        allowances
+                                );
+
+                        System.out.println(payslip);
+
+                        break;
+
+                    case 4:
 
                         System.out.println("Exiting application...");
                         scanner.close();
@@ -92,12 +121,11 @@ public class Main {
 
                     default:
                         System.out.println("Invalid choice");
-
                 }
 
             } catch (ValidationException e) {
 
-                System.out.println("Validation Error: " + e.getMessage());
+                System.out.println("Validation error: " + e.getMessage());
 
             } catch (Exception e) {
 

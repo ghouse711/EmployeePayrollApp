@@ -52,7 +52,18 @@ public class Employee {
 
         this.accountId = generateAccountId();
     }
+    
+    public String getEmpId() {
+        return employeeId;
+    }
 
+    public String getName() {
+        return name;
+    }
+
+    public double getSalary() {
+        return salary;
+    }
 
 
     // Generates a short unique account ID for payroll reference
